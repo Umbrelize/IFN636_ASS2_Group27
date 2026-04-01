@@ -1,6 +1,5 @@
-
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
     name: { type: String, required: true },
@@ -8,6 +7,11 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     university: { type: String },
     address: { type: String },
+    role: {
+        type: String,
+        enum: ['user', 'admin'],
+        default: 'user',
+    },
 });
 
 userSchema.pre('save', async function (next) {
