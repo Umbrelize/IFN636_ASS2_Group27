@@ -11,8 +11,20 @@ export const AuthProvider = ({ children }) => {
     const savedUser = localStorage.getItem('user');
     const savedToken = localStorage.getItem('token');
 
-    if (savedUser && savedToken) {
-      setUser(JSON.parse(savedUser));
+    if (
+      savedUser &&
+      savedUser !== 'undefined' &&
+      savedUser !== 'null' &&
+      savedToken
+    ) {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (error) {
+        console.error('Invalid user data in localStorage:', error);
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        setUser(null);
+      }
     }
 
     setLoading(false);
@@ -25,7 +37,6 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(response.data.user));
 
     setUser(response.data.user);
-
     return response.data;
   };
 
