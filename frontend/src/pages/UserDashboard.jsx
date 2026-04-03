@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import api from '../axiosConfig';
-import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 
 const UserDashboard = () => {
-  const { user } = useAuth();
   const [tickets, setTickets] = useState([]);
   const [error, setError] = useState('');
 
@@ -33,14 +31,7 @@ const UserDashboard = () => {
   const recentTickets = tickets.slice(0, 5);
 
   return (
-    <div className="main-content">
-      <div className="top-header">
-        <div>
-          <h1>Dashboard</h1>
-          <p>Welcome back, {user?.name}</p>
-        </div>
-      </div>
-
+    <div className="dashboard-page">
       {error && <p className="error-text">{error}</p>}
 
       <div className="stats-grid">
@@ -68,7 +59,7 @@ const UserDashboard = () => {
       <div className="card dashboard-table-card">
         <div className="dashboard-table-header">
           <h2>Recent Tickets</h2>
-          <Link to="/tickets">View All</Link>
+          <Link to="/my-tickets">View All</Link>
         </div>
 
         {recentTickets.length === 0 ? (
@@ -82,6 +73,7 @@ const UserDashboard = () => {
                   <th>Status</th>
                   <th>Priority</th>
                   <th>Date Created</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -91,6 +83,11 @@ const UserDashboard = () => {
                     <td>{ticket.status}</td>
                     <td>{ticket.priority}</td>
                     <td>{new Date(ticket.createdAt).toLocaleDateString()}</td>
+                    <td>
+                      <Link to={`/my-tickets/${ticket._id}`} className="table-link-btn">
+                        View
+                      </Link>
+                    </td>
                   </tr>
                 ))}
               </tbody>

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import api from '../axiosConfig';
 
 const TicketForm = ({
-  tickets,
+  tickets = [],
   setTickets,
   editingTicket,
   setEditingTicket,
@@ -44,6 +44,7 @@ const TicketForm = ({
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -59,7 +60,11 @@ const TicketForm = ({
       status: 'Open',
       image: '',
     });
-    setEditingTicket(null);
+
+    if (setEditingTicket) {
+      setEditingTicket(null);
+    }
+
     setError('');
   };
 
@@ -79,7 +84,10 @@ const TicketForm = ({
         };
 
         const response = await api.post('/api/tickets', payload);
-        setTickets([response.data, ...tickets]);
+
+        if (setTickets) {
+          setTickets([response.data, ...tickets]);
+        }
       } else {
         const payload = {
           subject: formData.subject,
@@ -99,11 +107,13 @@ const TicketForm = ({
 
         const response = await api.put(endpoint, payload);
 
-        setTickets(
-          tickets.map((ticket) =>
-            ticket._id === editingTicket._id ? response.data : ticket
-          )
-        );
+        if (setTickets) {
+          setTickets(
+            tickets.map((ticket) =>
+              ticket._id === editingTicket._id ? response.data : ticket
+            )
+          );
+        }
       }
 
       clearForm();
@@ -121,17 +131,30 @@ const TicketForm = ({
       {error && <p className="error-text">{error}</p>}
 
       <form onSubmit={handleSubmit} className="ticket-form">
+        <div className="form-group">
+          <label>Subject</label>
+          <input
+            type="text"
+            name="subject"
+            value={formData.subject}
+            onChange={handleChange}
+            placeholder="Enter ticket subject"
+            required
+          />
+        </div>
+
         <div className="form-row">
           <div className="form-group">
-            <label>Subject</label>
-            <input
-              type="text"
-              name="subject"
-              value={formData.subject}
+            <label>Priority</label>
+            <select
+              name="priority"
+              value={formData.priority}
               onChange={handleChange}
-              placeholder="Enter ticket subject"
-              required
-            />
+            >
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+            </select>
           </div>
 
           <div className="form-group">
@@ -146,21 +169,6 @@ const TicketForm = ({
               <option value="Network">Network</option>
               <option value="Account">Account</option>
               <option value="Other">Other</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="form-row">
-          <div className="form-group">
-            <label>Priority</label>
-            <select
-              name="priority"
-              value={formData.priority}
-              onChange={handleChange}
-            >
-              <option value="Low">Low</option>
-              <option value="Medium">Medium</option>
-              <option value="High">High</option>
             </select>
           </div>
 

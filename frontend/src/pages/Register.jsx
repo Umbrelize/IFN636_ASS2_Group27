@@ -1,19 +1,15 @@
 import { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
+import api from '../axiosConfig';
 
 const Register = () => {
-  const { register } = useAuth();
-  const navigate = useNavigate();
-
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
   });
-
   const [error, setError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -25,27 +21,29 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setSubmitting(true);
 
     try {
-      await register(formData);
+      await api.post('/api/auth/register', formData);
       navigate('/login');
     } catch (error) {
-      setError(error.response?.data?.message || 'Register failed');
-    } finally {
-      setSubmitting(false);
+      setError(error.response?.data?.message || 'Registration failed');
     }
   };
 
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <h1>Register</h1>
-        <p className="auth-subtitle">Create a new account</p>
-
-        {error && <p className="error-text">{error}</p>}
+        <div className="auth-brand">
+          <div className="auth-logo">🎫</div>
+          <div>
+            <h1>Create account</h1>
+            <p>Register for the IT Support Ticket System</p>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
+          {error && <p className="error-text">{error}</p>}
+
           <div className="form-group">
             <label>Name</label>
             <input
@@ -82,8 +80,8 @@ const Register = () => {
             />
           </div>
 
-          <button type="submit" className="primary-btn auth-btn" disabled={submitting}>
-            {submitting ? 'Creating account...' : 'Register'}
+          <button type="submit" className="auth-btn">
+            Register
           </button>
         </form>
 

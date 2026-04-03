@@ -1,80 +1,121 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Navbar from './components/Navbar';
+import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
+import Layout from './components/Layout';
+
 import Login from './pages/Login';
 import Register from './pages/Register';
 import UserDashboard from './pages/UserDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import MyTickets from './pages/MyTickets';
 import Tickets from './pages/Tickets';
+import TicketDetail from './pages/TicketDetail';
 import Profile from './pages/Profile';
-import ProtectedRoute from './components/ProtectedRoute';
-import AdminRoute from './components/AdminRoute';
+
 import { useAuth } from './context/AuthContext';
 import './App.css';
 
-function AppRoutes() {
+function App() {
   const { user, isAuthenticated } = useAuth();
 
   return (
     <Router>
-      <div className={isAuthenticated ? 'app-layout' : ''}>
-        <Navbar />
+      <Routes>
+        <Route
+          path="/"
+          element={
+            isAuthenticated ? (
+              <Navigate to={user?.role === 'admin' ? '/admin' : '/dashboard'} replace />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
 
-        <Routes>
-          <Route
-            path="/"
-            element={
-              isAuthenticated ? (
-                <Navigate to={user?.role === 'admin' ? '/admin' : '/dashboard'} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Layout>
                 <UserDashboard />
-              </ProtectedRoute>
-            }
-          />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
 
-          <Route
-            path="/tickets"
-            element={
-              <ProtectedRoute>
-                <Tickets />
-              </ProtectedRoute>
-            }
-          />
+        <Route
+          path="/my-tickets"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <MyTickets />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
 
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
+        <Route
+          path="/my-tickets/:id"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <TicketDetail />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Layout>
                 <Profile />
-              </ProtectedRoute>
-            }
-          />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
 
-          <Route
-            path="/admin"
-            element={
-              <AdminRoute>
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <Layout>
                 <AdminDashboard />
-              </AdminRoute>
-            }
-          />
+              </Layout>
+            </AdminRoute>
+          }
+        />
 
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-      </div>
+        <Route
+          path="/tickets"
+          element={
+            <AdminRoute>
+              <Layout>
+                <Tickets />
+              </Layout>
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/tickets/:id"
+          element={
+            <AdminRoute>
+              <Layout>
+                <TicketDetail />
+              </Layout>
+            </AdminRoute>
+          }
+        />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </Router>
   );
 }
 
-export default AppRoutes;
+export default App;
