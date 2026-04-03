@@ -31,24 +31,31 @@ const Sidebar = () => {
 
   return (
     <aside className="sidebar">
-      <div>
+      <div className="sidebar-top">
         <div className="sidebar-brand">
           <div className="sidebar-logo">🎫</div>
-          <div>
-            <h2>IT Support</h2>
+          <div className="sidebar-brand-text">
+            <h2>IT Support Ticket System</h2>
           </div>
         </div>
 
         <nav className="sidebar-nav">
-          {menuItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={location.pathname === item.path ? 'active' : ''}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {menuItems.map((item) => {
+            const isActive =
+              location.pathname === item.path ||
+              (item.path !== '/profile' &&
+                location.pathname.startsWith(item.path + '/'));
+
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={isActive ? 'active' : ''}
+              >
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
         </nav>
       </div>
 

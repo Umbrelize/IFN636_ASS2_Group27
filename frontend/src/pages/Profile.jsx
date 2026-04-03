@@ -69,70 +69,90 @@ const Profile = () => {
     }
   };
 
-  return (
-    <div className="main-content">
-      <div className="top-header">
-        <div>
-          <h1>Profile</h1>
-          <p>Manage your account details</p>
+  if (loadingProfile) {
+    return (
+      <div className="profile-page">
+        <div className="profile-card">
+          <p className="empty-text">Loading profile...</p>
         </div>
       </div>
+    );
+  }
 
-      <div className="card form-card">
-        {loadingProfile ? (
-          <p>Loading profile...</p>
-        ) : (
-          <>
-            {error && <p className="error-text">{error}</p>}
-            {success && <p className="success-text">{success}</p>}
+  return (
+    <div className="profile-page">
+      <div className="profile-card">
+        <h1>Profile</h1>
+        <p>Manage your account details</p>
 
-            <form onSubmit={handleSubmit} className="ticket-form">
-              <div className="form-group">
-                <label>Name</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                />
-              </div>
+        {error && <p className="error-text">{error}</p>}
 
-              <div className="form-group">
-                <label>Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>University</label>
-                <input
-                  type="text"
-                  name="university"
-                  value={formData.university}
-                  onChange={handleChange}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Address</label>
-                <input
-                  type="text"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                />
-              </div>
-
-              <button type="submit" className="primary-btn">
-                Update Profile
-              </button>
-            </form>
-          </>
+        {success && (
+          <p
+            style={{
+              margin: '0 0 16px',
+              padding: '12px 14px',
+              borderRadius: '12px',
+              background: '#edfdf3',
+              border: '1px solid #b7ebc8',
+              color: '#1f8f4d',
+              fontSize: '14px',
+              fontWeight: 600,
+            }}
+          >
+            {success}
+          </p>
         )}
+
+        <form onSubmit={handleSubmit} className="ticket-form">
+          <div className="form-group">
+            <label>Name</label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="Enter your name"
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Email</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Enter your email"
+            />
+          </div>
+
+          <div className="form-group">
+            <label>University</label>
+            <input
+              type="text"
+              name="university"
+              value={formData.university}
+              onChange={handleChange}
+              placeholder="Enter your university"
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Address</label>
+            <input
+              type="text"
+              name="address"
+              value={formData.address}
+              onChange={handleChange}
+              placeholder="Enter your address"
+            />
+          </div>
+
+          <button type="submit" className="primary-btn">
+            Update Profile
+          </button>
+        </form>
       </div>
     </div>
   );

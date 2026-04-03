@@ -46,7 +46,9 @@ const Tickets = () => {
       </div>
 
       {loading ? (
-        <p>Loading tickets...</p>
+        <div className="figma-table-card">
+          <p className="empty-text">Loading tickets...</p>
+        </div>
       ) : (
         <TicketList
           tickets={tickets}

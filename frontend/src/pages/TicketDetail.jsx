@@ -3,6 +3,22 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../axiosConfig';
 import { useAuth } from '../context/AuthContext';
 
+const BACKEND_URL = 'http://localhost:5001';
+
+const getStatusClass = (status) => {
+  if (status === 'Open') return 'badge badge-open';
+  if (status === 'In Progress') return 'badge badge-progress';
+  if (status === 'Resolved') return 'badge badge-resolved';
+  if (status === 'Closed') return 'badge badge-closed';
+  return 'badge';
+};
+
+const getPriorityClass = (priority) => {
+  if (priority === 'High') return 'priority-inline high-text';
+  if (priority === 'Medium') return 'priority-inline medium-text';
+  return 'priority-inline low-text';
+};
+
 const TicketDetail = () => {
   const { id } = useParams();
   const { user } = useAuth();
@@ -11,6 +27,12 @@ const TicketDetail = () => {
   const [ticket, setTicket] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+
+  const getImageSrc = (imagePath) => {
+    if (!imagePath) return '';
+    if (imagePath.startsWith('http')) return imagePath;
+    return `${BACKEND_URL}${imagePath}`;
+  };
 
   useEffect(() => {
     const fetchTicket = async () => {
@@ -32,16 +54,36 @@ const TicketDetail = () => {
   }, [id, isAdmin]);
 
   if (loading) {
-    return <p>Loading ticket details...</p>;
+    return (
+      <div className="ticket-detail-page">
+        <div className="card ticket-detail-card">
+          <p className="empty-text">Loading ticket details...</p>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
-    return <p className="error-text">{error}</p>;
+    return (
+      <div className="ticket-detail-page">
+        <div className="card ticket-detail-card">
+          <p className="error-text">{error}</p>
+        </div>
+      </div>
+    );
   }
 
   if (!ticket) {
-    return <p className="error-text">Ticket not found.</p>;
+    return (
+      <div className="ticket-detail-page">
+        <div className="card ticket-detail-card">
+          <p className="error-text">Ticket not found.</p>
+        </div>
+      </div>
+    );
   }
+
+  const imageSrc = getImageSrc(ticket.image);
 
   return (
     <div className="ticket-detail-page">
@@ -52,10 +94,7 @@ const TicketDetail = () => {
             <p>Full ticket information</p>
           </div>
 
-          <Link
-            to={isAdmin ? '/tickets' : '/my-tickets'}
-            className="back-link"
-          >
+          <Link to={isAdmin ? '/tickets' : '/my-tickets'} className="back-link">
             ← Back
           </Link>
         </div>
@@ -68,17 +107,27 @@ const TicketDetail = () => {
 
           <div className="detail-item">
             <span className="detail-label">Category</span>
-            <span className="detail-value">{ticket.category}</span>
+            <span className="detail-value">
+              <span className="category-tag">{ticket.category}</span>
+            </span>
           </div>
 
           <div className="detail-item">
             <span className="detail-label">Priority</span>
-            <span className="detail-value">{ticket.priority}</span>
+            <span className="detail-value">
+              <span className={getPriorityClass(ticket.priority)}>
+                {ticket.priority}
+              </span>
+            </span>
           </div>
 
           <div className="detail-item">
             <span className="detail-label">Status</span>
-            <span className="detail-value">{ticket.status}</span>
+            <span className="detail-value">
+              <span className={getStatusClass(ticket.status)}>
+                {ticket.status}
+              </span>
+            </span>
           </div>
 
           <div className="detail-item">
@@ -121,11 +170,17 @@ const TicketDetail = () => {
           <h3>Image</h3>
           {ticket.image ? (
             <div className="detail-image-wrap">
-              <a href={ticket.image} target="_blank" rel="noreferrer" className="image-link">
-                Open image link
+              <a
+                href={imageSrc}
+                target="_blank"
+                rel="noreferrer"
+                className="image-link"
+              >
+                Open image
               </a>
+
               <img
-                src={ticket.image}
+                src={imageSrc}
                 alt={ticket.subject}
                 className="detail-image"
               />

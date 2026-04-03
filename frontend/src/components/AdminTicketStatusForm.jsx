@@ -57,6 +57,15 @@ const AdminTicketStatusForm = ({
   return (
     <div className="card form-card admin-status-card">
       <h3>Update Ticket Status</h3>
+      <p
+        style={{
+          margin: '0 0 20px',
+          fontSize: '14px',
+          color: '#8a94a6',
+        }}
+      >
+        Review the selected ticket and update its current status.
+      </p>
 
       {error && <p className="error-text">{error}</p>}
 
@@ -69,7 +78,8 @@ const AdminTicketStatusForm = ({
         <div className="summary-row">
           <span className="summary-label">User</span>
           <span className="summary-value">
-            {editingTicket.user?.name || '-'} {editingTicket.user?.email ? `(${editingTicket.user.email})` : ''}
+            {editingTicket.user?.name || '-'}
+            {editingTicket.user?.email ? ` (${editingTicket.user.email})` : ''}
           </span>
         </div>
 
@@ -96,12 +106,12 @@ const AdminTicketStatusForm = ({
         </div>
 
         <div className="form-actions">
-          <button type="submit" className="primary-btn" disabled={submitting}>
-            {submitting ? 'Saving...' : 'Update Status'}
-          </button>
-
           <button type="button" className="secondary-btn" onClick={handleCancel}>
             Cancel
+          </button>
+
+          <button type="submit" className="primary-btn" disabled={submitting}>
+            {submitting ? 'Saving...' : 'Update Status'}
           </button>
         </div>
       </form>

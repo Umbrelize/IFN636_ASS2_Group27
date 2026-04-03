@@ -2,6 +2,21 @@ import { useEffect, useMemo, useState } from 'react';
 import api from '../axiosConfig';
 import { Link } from 'react-router-dom';
 
+const getStatusClass = (status) => {
+  if (status === 'Open') return 'badge badge-open';
+  if (status === 'In Progress') return 'badge badge-progress';
+  if (status === 'Resolved') return 'badge badge-resolved';
+  if (status === 'Closed') return 'badge badge-closed';
+  return 'badge';
+};
+
+const getPriorityClass = (priority) => {
+  if (priority === 'High') return 'high-text';
+  if (priority === 'Medium') return 'medium-text';
+  if (priority === 'Low') return 'low-text';
+  return '';
+};
+
 const UserDashboard = () => {
   const [tickets, setTickets] = useState([]);
   const [error, setError] = useState('');
@@ -63,12 +78,13 @@ const UserDashboard = () => {
         </div>
 
         {recentTickets.length === 0 ? (
-          <p>No tickets yet.</p>
+          <p className="empty-text">No tickets yet.</p>
         ) : (
           <div className="table-scroll">
             <table className="ticket-table">
               <thead>
                 <tr>
+                  <th>Ticket ID</th>
                   <th>Subject</th>
                   <th>Status</th>
                   <th>Priority</th>
@@ -77,11 +93,20 @@ const UserDashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {recentTickets.map((ticket) => (
+                {recentTickets.map((ticket, index) => (
                   <tr key={ticket._id}>
-                    <td>{ticket.subject}</td>
-                    <td>{ticket.status}</td>
-                    <td>{ticket.priority}</td>
+                    <td className="ticket-id">#TK-{4820 - index}</td>
+                    <td className="issue-title">{ticket.subject}</td>
+                    <td>
+                      <span className={getStatusClass(ticket.status)}>
+                        {ticket.status}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={getPriorityClass(ticket.priority)}>
+                        {ticket.priority}
+                      </span>
+                    </td>
                     <td>{new Date(ticket.createdAt).toLocaleDateString()}</td>
                     <td>
                       <Link to={`/my-tickets/${ticket._id}`} className="table-link-btn">

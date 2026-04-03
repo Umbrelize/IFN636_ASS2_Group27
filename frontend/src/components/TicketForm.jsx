@@ -14,9 +14,11 @@ const TicketForm = ({
     category: 'Other',
     priority: 'Medium',
     status: 'Open',
-    image: '',
+    image: null,
   });
 
+  const [existingImage, setExistingImage] = useState('');
+  const [previewUrl, setPreviewUrl] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -28,8 +30,11 @@ const TicketForm = ({
         category: editingTicket.category || 'Other',
         priority: editingTicket.priority || 'Medium',
         status: editingTicket.status || 'Open',
-        image: editingTicket.image || '',
+        image: null,
       });
+
+      setExistingImage(editingTicket.image || '');
+      setPreviewUrl('');
     } else {
       setFormData({
         subject: '',
@@ -37,10 +42,22 @@ const TicketForm = ({
         category: 'Other',
         priority: 'Medium',
         status: 'Open',
-        image: '',
+        image: null,
       });
+
+      setExistingImage('');
+      setPreviewUrl('');
     }
   }, [editingTicket]);
+
+  useEffect(() => {
+    if (!formData.image) return;
+
+    const objectUrl = URL.createObjectURL(formData.image);
+    setPreviewUrl(objectUrl);
+
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [formData.image]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -51,6 +68,15 @@ const TicketForm = ({
     }));
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0] || null;
+
+    setFormData((prev) => ({
+      ...prev,
+      image: file,
+    }));
+  };
+
   const clearForm = () => {
     setFormData({
       subject: '',
@@ -58,14 +84,35 @@ const TicketForm = ({
       category: 'Other',
       priority: 'Medium',
       status: 'Open',
-      image: '',
+      image: null,
     });
+
+    setExistingImage('');
+    setPreviewUrl('');
+    setError('');
 
     if (setEditingTicket) {
       setEditingTicket(null);
     }
+  };
 
-    setError('');
+  const buildPayload = () => {
+    const payload = new FormData();
+
+    payload.append('subject', formData.subject);
+    payload.append('description', formData.description);
+    payload.append('category', formData.category);
+    payload.append('priority', formData.priority);
+
+    if (isAdmin) {
+      payload.append('status', formData.status);
+    }
+
+    if (formData.image) {
+      payload.append('image', formData.image);
+    }
+
+    return payload;
   };
 
   const handleSubmit = async (e) => {
@@ -74,38 +121,28 @@ const TicketForm = ({
     setSubmitting(true);
 
     try {
-      if (!editingTicket) {
-        const payload = {
-          subject: formData.subject,
-          description: formData.description,
-          category: formData.category,
-          priority: formData.priority,
-          image: formData.image,
-        };
+      const payload = buildPayload();
 
-        const response = await api.post('/api/tickets', payload);
+      if (!editingTicket) {
+        const response = await api.post('/api/tickets', payload, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
 
         if (setTickets) {
           setTickets([response.data, ...tickets]);
         }
       } else {
-        const payload = {
-          subject: formData.subject,
-          description: formData.description,
-          category: formData.category,
-          priority: formData.priority,
-          image: formData.image,
-        };
-
-        if (isAdmin) {
-          payload.status = formData.status;
-        }
-
         const endpoint = isAdmin
           ? `/api/tickets/admin/${editingTicket._id}`
           : `/api/tickets/${editingTicket._id}`;
 
-        const response = await api.put(endpoint, payload);
+        const response = await api.put(endpoint, payload, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
 
         if (setTickets) {
           setTickets(
@@ -126,37 +163,36 @@ const TicketForm = ({
 
   return (
     <div className="card form-card">
-      <h3>{editingTicket ? 'Edit Ticket' : 'Create Ticket'}</h3>
+      <h3>{editingTicket ? 'Edit Ticket' : 'Create New Ticket'}</h3>
+
+      <p
+        style={{
+          margin: '0 0 20px',
+          fontSize: '14px',
+          color: '#8a94a6',
+        }}
+      >
+        {editingTicket
+          ? 'Update your ticket details below.'
+          : 'Please provide specific details so we can assist you better.'}
+      </p>
 
       {error && <p className="error-text">{error}</p>}
 
       <form onSubmit={handleSubmit} className="ticket-form">
         <div className="form-group">
-          <label>Subject</label>
+          <label>Ticket Title</label>
           <input
             type="text"
             name="subject"
             value={formData.subject}
             onChange={handleChange}
-            placeholder="Enter ticket subject"
+            placeholder="Briefly describe the issue"
             required
           />
         </div>
 
         <div className="form-row">
-          <div className="form-group">
-            <label>Priority</label>
-            <select
-              name="priority"
-              value={formData.priority}
-              onChange={handleChange}
-            >
-              <option value="Low">Low</option>
-              <option value="Medium">Medium</option>
-              <option value="High">High</option>
-            </select>
-          </div>
-
           <div className="form-group">
             <label>Category</label>
             <select
@@ -169,6 +205,19 @@ const TicketForm = ({
               <option value="Network">Network</option>
               <option value="Account">Account</option>
               <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>Priority</label>
+            <select
+              name="priority"
+              value={formData.priority}
+              onChange={handleChange}
+            >
+              <option value="Low">Low - General inquiry</option>
+              <option value="Medium">Medium - Normal issue</option>
+              <option value="High">High - Urgent problem</option>
             </select>
           </div>
 
@@ -193,34 +242,54 @@ const TicketForm = ({
           <label>Description</label>
           <textarea
             name="description"
-            rows="4"
+            rows="5"
             value={formData.description}
             onChange={handleChange}
-            placeholder="Describe the issue"
+            placeholder="Provide detailed steps to reproduce or details about your request..."
             required
           />
         </div>
 
         <div className="form-group">
-          <label>Image URL</label>
+          <label>Upload Image (Optional)</label>
           <input
-            type="text"
-            name="image"
-            value={formData.image}
-            onChange={handleChange}
-            placeholder="Paste image link here (optional)"
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
           />
+
+          {previewUrl && (
+            <div style={{ marginTop: '12px' }}>
+              <img
+                src={previewUrl}
+                alt="Preview"
+                style={{
+                  width: '140px',
+                  height: 'auto',
+                  borderRadius: '10px',
+                  border: '1px solid #e5e7eb',
+                }}
+              />
+            </div>
+          )}
+
+          {!previewUrl && existingImage && (
+            <div style={{ marginTop: '12px' }}>
+              <img
+                src={`http://localhost:5001${existingImage}`}
+                alt="Current ticket"
+                style={{
+                  width: '140px',
+                  height: 'auto',
+                  borderRadius: '10px',
+                  border: '1px solid #e5e7eb',
+                }}
+              />
+            </div>
+          )}
         </div>
 
         <div className="form-actions">
-          <button type="submit" className="primary-btn" disabled={submitting}>
-            {submitting
-              ? 'Saving...'
-              : editingTicket
-              ? 'Update Ticket'
-              : 'Create Ticket'}
-          </button>
-
           {editingTicket && (
             <button
               type="button"
@@ -230,6 +299,14 @@ const TicketForm = ({
               Cancel
             </button>
           )}
+
+          <button type="submit" className="primary-btn" disabled={submitting}>
+            {submitting
+              ? 'Saving...'
+              : editingTicket
+              ? 'Update Ticket'
+              : 'Submit Ticket'}
+          </button>
         </div>
       </form>
     </div>

@@ -43,7 +43,7 @@ const TicketList = ({
   if (!tickets || tickets.length === 0) {
     return (
       <div className="figma-table-card">
-        <div className="empty-box">No tickets found.</div>
+        <p className="empty-text">No tickets found.</p>
       </div>
     );
   }
@@ -51,26 +51,26 @@ const TicketList = ({
   return (
     <div className="figma-table-card ticket-list-wrap">
       <div className="table-scroll">
-        <table className="figma-table">
+        <table className="figma-table figma-ticket-table">
           <thead>
             <tr>
-              <th>TICKET ID</th>
-              {isAdmin && <th>USER</th>}
-              <th>ISSUE TITLE</th>
-              <th>CATEGORY</th>
-              <th>STATUS</th>
-              <th>PRIORITY</th>
-              <th>ACTIONS</th>
+              <th className="col-id">Ticket ID</th>
+              {isAdmin && <th className="col-user">User</th>}
+              <th className="col-title">Issue Title</th>
+              <th className="col-category">Category</th>
+              <th className="col-status">Status</th>
+              <th className="col-priority">Priority</th>
+              <th className="col-actions">Actions</th>
             </tr>
           </thead>
 
           <tbody>
             {tickets.map((ticket, index) => (
               <tr key={ticket._id}>
-                <td className="ticket-id">#TK-{4820 - index}</td>
+                <td className="ticket-id col-id">#TK-{4820 - index}</td>
 
                 {isAdmin && (
-                  <td>
+                  <td className="col-user">
                     <div className="user-cell">
                       <div className="mini-avatar">👤</div>
                       <div>
@@ -81,29 +81,31 @@ const TicketList = ({
                   </td>
                 )}
 
-                <td className="issue-title">{ticket.subject}</td>
+                <td className="issue-title col-title">
+                  <div className="title-clamp">{ticket.subject}</div>
+                </td>
 
-                <td>
+                <td className="col-category">
                   <span className="category-tag">{ticket.category}</span>
                 </td>
 
-                <td>
+                <td className="col-status">
                   <span className={getStatusClass(ticket.status)}>
                     {ticket.status}
                   </span>
                 </td>
 
-                <td>
+                <td className="col-priority">
                   <span className={getPriorityClass(ticket.priority)}>
                     {ticket.priority}
                   </span>
                 </td>
 
-                <td>
-                  <div className="icon-actions minimal-actions">
+                <td className="col-actions">
+                  <div className="icon-actions compact-actions">
                     <Link
                       to={isAdmin ? `/tickets/${ticket._id}` : `/my-tickets/${ticket._id}`}
-                      className="action-btn"
+                      className="action-btn small-action-btn"
                       title="View details"
                     >
                       View
@@ -111,16 +113,16 @@ const TicketList = ({
 
                     <button
                       type="button"
-                      className="action-btn"
+                      className="action-btn small-action-btn"
                       onClick={() => setEditingTicket && setEditingTicket(ticket)}
                       title={isAdmin ? 'Update status' : 'Edit ticket'}
                     >
-                      {isAdmin ? 'Status' : 'Edit'}
+                      {isAdmin ? 'Update' : 'Edit'}
                     </button>
 
                     <button
                       type="button"
-                      className="action-btn delete-action"
+                      className="action-btn delete-action small-action-btn"
                       onClick={() => handleDelete(ticket._id)}
                       title="Delete ticket"
                     >

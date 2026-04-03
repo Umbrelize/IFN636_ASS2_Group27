@@ -9,7 +9,7 @@ const Topbar = () => {
     if (location.pathname === '/dashboard') return 'Dashboard';
     if (location.pathname === '/my-tickets') return 'My Tickets';
     if (location.pathname.startsWith('/my-tickets/')) return 'Ticket Details';
-    if (location.pathname === '/admin') return 'Dashboard Overview';
+    if (location.pathname === '/admin') return 'Dashboard';
     if (location.pathname === '/tickets') return 'Ticket List';
     if (location.pathname.startsWith('/tickets/')) return 'Ticket Details';
     if (location.pathname === '/profile') return 'Profile Info';
@@ -18,10 +18,10 @@ const Topbar = () => {
 
   const getSubtitle = () => {
     if (location.pathname === '/admin') {
-      return `Welcome back, ${user?.name}. Here's what's happening today.`;
+      return `Welcome back, ${user?.role === 'admin' ? 'Admin' : user?.name}. Here’s what’s happening today.`;
     }
     if (location.pathname === '/dashboard') {
-      return `Welcome back, ${user?.name}.`;
+      return `Welcome back, ${user?.role === 'admin' ? 'Admin' : user?.name}.`;
     }
     if (location.pathname === '/my-tickets') {
       return 'Create and track your own support tickets.';
@@ -41,6 +41,12 @@ const Topbar = () => {
     return '';
   };
 
+  const displayName = user?.role === 'admin' ? 'Admin' : user?.name || 'User';
+  const displayRole = user?.role === 'admin' ? 'IT Support' : 'User';
+  const avatarLetter = user?.role === 'admin'
+    ? 'A'
+    : (user?.name?.charAt(0)?.toUpperCase() || 'U');
+
   return (
     <header className="topbar">
       <div className="topbar-left">
@@ -49,17 +55,17 @@ const Topbar = () => {
       </div>
 
       <div className="topbar-right">
-        <div className="bell-wrap">
+        <button type="button" className="bell-wrap" aria-label="Notifications">
           <span className="bell">🔔</span>
           <span className="bell-dot" />
-        </div>
+        </button>
 
         <div className="user">
           <div className="user-text">
-            <strong>{user?.name}</strong>
-            <p>{user?.role === 'admin' ? 'IT Support' : 'User'}</p>
+            <strong>{displayName}</strong>
+            <p>{displayRole}</p>
           </div>
-          <div className="avatar">👤</div>
+          <div className="avatar">{avatarLetter}</div>
         </div>
       </div>
     </header>

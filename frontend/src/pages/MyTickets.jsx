@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import api from '../axiosConfig';
 import TicketForm from '../components/TicketForm';
 import TicketList from '../components/TicketList';
@@ -8,6 +8,8 @@ const MyTickets = () => {
   const [editingTicket, setEditingTicket] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+
+  const formRef = useRef(null);
 
   useEffect(() => {
     const fetchTickets = async () => {
@@ -24,20 +26,30 @@ const MyTickets = () => {
     fetchTickets();
   }, []);
 
+  useEffect(() => {
+    if (editingTicket && formRef.current) {
+      formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [editingTicket]);
+
   return (
     <div className="tickets-page">
       {error && <p className="error-text">{error}</p>}
 
-      <TicketForm
-        tickets={tickets}
-        setTickets={setTickets}
-        editingTicket={editingTicket}
-        setEditingTicket={setEditingTicket}
-        isAdmin={false}
-      />
+      <div ref={formRef}>
+        <TicketForm
+          tickets={tickets}
+          setTickets={setTickets}
+          editingTicket={editingTicket}
+          setEditingTicket={setEditingTicket}
+          isAdmin={false}
+        />
+      </div>
 
       {loading ? (
-        <p>Loading tickets...</p>
+        <div className="figma-table-card">
+          <p className="empty-text">Loading tickets...</p>
+        </div>
       ) : (
         <TicketList
           tickets={tickets}
