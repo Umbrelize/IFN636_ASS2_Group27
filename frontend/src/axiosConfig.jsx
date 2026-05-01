@@ -1,12 +1,7 @@
 import axios from 'axios';
 
-// Change this one value when your EC2 public IP changes
-export const BACKEND_BASE_URL = 'http://3.107.187.143';
-
-// API base URL for axios requests
+export const BACKEND_BASE_URL = 'http://3.106.59.203';
 export const API_BASE_URL = `${BACKEND_BASE_URL}/api`;
-
-// Optional helper for uploaded images
 export const UPLOADS_BASE_URL = `${BACKEND_BASE_URL}/uploads`;
 
 const api = axios.create({
@@ -27,6 +22,22 @@ api.interceptors.request.use(
     return config;
   },
   (error) => Promise.reject(error)
+);
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
+
+    return Promise.reject(error);
+  }
 );
 
 export default api;
