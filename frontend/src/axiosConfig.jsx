@@ -1,8 +1,9 @@
 import axios from 'axios';
 
-export const BACKEND_BASE_URL = 'http://3.106.59.203';
-export const API_BASE_URL = `${BACKEND_BASE_URL}/api`;
-export const UPLOADS_BASE_URL = `${BACKEND_BASE_URL}/uploads`;
+export const BACKEND_BASE_URL = '';
+export const API_BASE_URL = '/api';
+export const UPLOADS_BASE_URL = '/uploads';
+>>>>>>> 5cd9a5e (Update frontend API base URL)
 
 const api = axios.create({
   baseURL: API_BASE_URL,
