@@ -1,176 +1,137 @@
-const Ticket = require('../models/Ticket');
+const ticketFacade = require('../services/TicketFacade');
 
-// USER: create ticket
+const handleError = (res, error) => {
+  const statusCode = error.statusCode || 500;
+  return res.status(statusCode).json({ message: error.message });
+};
+
 const createTicket = async (req, res) => {
   try {
-    const { subject, description, category, priority } = req.body;
-
-    if (!subject || !description) {
-      return res.status(400).json({ message: 'Subject and description are required' });
-    }
-
-    const ticket = await Ticket.create({
-      user: req.user.id,
-      subject,
-      description,
-      category,
-      priority,
-      image: req.file ? `/uploads/${req.file.filename}` : '',
-    });
-
+    const ticket = await ticketFacade.createTicket(req.user, req.body, req.file);
     res.status(201).json(ticket);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    handleError(res, error);
   }
 };
 
-// USER: read own tickets
 const getMyTickets = async (req, res) => {
   try {
-    const tickets = await Ticket.find({ user: req.user.id }).sort({ createdAt: -1 });
+    const tickets = await ticketFacade.getMyTickets(req.user);
     res.status(200).json(tickets);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    handleError(res, error);
   }
 };
 
-// USER: read one own ticket
 const getMyTicketById = async (req, res) => {
   try {
-    const ticket = await Ticket.findById(req.params.id);
-
-    if (!ticket) {
-      return res.status(404).json({ message: 'Ticket not found' });
-    }
-
-    if (ticket.user.toString() !== req.user.id) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
-
+    const ticket = await ticketFacade.getMyTicketById(req.params.id, req.user);
     res.status(200).json(ticket);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    handleError(res, error);
   }
 };
 
-// USER: update own ticket
+const getTicketActivity = async (req, res) => {
+  try {
+    const logs = await ticketFacade.getTicketActivity(req.params.id, req.user);
+    res.status(200).json(logs);
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
 const updateMyTicket = async (req, res) => {
   try {
-    const ticket = await Ticket.findById(req.params.id);
-
-    if (!ticket) {
-      return res.status(404).json({ message: 'Ticket not found' });
-    }
-
-    if (ticket.user.toString() !== req.user.id) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
-
-    ticket.subject = req.body.subject || ticket.subject;
-    ticket.description = req.body.description || ticket.description;
-    ticket.category = req.body.category || ticket.category;
-    ticket.priority = req.body.priority || ticket.priority;
-
-    if (req.file) {
-      ticket.image = `/uploads/${req.file.filename}`;
-    }
-
-    const updatedTicket = await ticket.save();
+    const updatedTicket = await ticketFacade.updateMyTicket(
+      req.params.id,
+      req.user,
+      req.body,
+      req.file
+    );
 
     res.status(200).json(updatedTicket);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    handleError(res, error);
   }
 };
 
-// USER: delete own ticket
+const updateMyTicketStatus = async (req, res) => {
+  try {
+    const updatedTicket = await ticketFacade.updateMyTicketStatus(
+      req.params.id,
+      req.user,
+      req.body.status
+    );
+
+    res.status(200).json(updatedTicket);
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
 const deleteMyTicket = async (req, res) => {
   try {
-    const ticket = await Ticket.findById(req.params.id);
-
-    if (!ticket) {
-      return res.status(404).json({ message: 'Ticket not found' });
-    }
-
-    if (ticket.user.toString() !== req.user.id) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
-
-    await ticket.deleteOne();
+    await ticketFacade.deleteMyTicket(req.params.id, req.user);
     res.status(200).json({ message: 'Ticket deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    handleError(res, error);
   }
 };
 
-// ADMIN: read all tickets
 const getAllTickets = async (req, res) => {
   try {
-    const tickets = await Ticket.find()
-      .populate('user', 'name email role')
-      .sort({ createdAt: -1 });
-
+    const tickets = await ticketFacade.getAllTickets();
     res.status(200).json(tickets);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    handleError(res, error);
   }
 };
 
-// ADMIN: read any ticket by id
 const getAnyTicketById = async (req, res) => {
   try {
-    const ticket = await Ticket.findById(req.params.id).populate('user', 'name email role');
-
-    if (!ticket) {
-      return res.status(404).json({ message: 'Ticket not found' });
-    }
-
+    const ticket = await ticketFacade.getAnyTicketById(req.params.id);
     res.status(200).json(ticket);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    handleError(res, error);
   }
 };
 
-// ADMIN: update any ticket
 const updateAnyTicket = async (req, res) => {
   try {
-    const ticket = await Ticket.findById(req.params.id);
-
-    if (!ticket) {
-      return res.status(404).json({ message: 'Ticket not found' });
-    }
-
-    ticket.subject = req.body.subject || ticket.subject;
-    ticket.description = req.body.description || ticket.description;
-    ticket.category = req.body.category || ticket.category;
-    ticket.priority = req.body.priority || ticket.priority;
-    ticket.status = req.body.status || ticket.status;
-
-    if (req.file) {
-      ticket.image = `/uploads/${req.file.filename}`;
-    }
-
-    const updatedTicket = await ticket.save();
+    const updatedTicket = await ticketFacade.updateAnyTicket(
+      req.params.id,
+      req.user,
+      req.body,
+      req.file
+    );
 
     res.status(200).json(updatedTicket);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    handleError(res, error);
   }
 };
 
-// ADMIN: delete any ticket
+const updateAnyTicketStatus = async (req, res) => {
+  try {
+    const updatedTicket = await ticketFacade.updateAnyTicketStatus(
+      req.params.id,
+      req.user,
+      req.body.status
+    );
+
+    res.status(200).json(updatedTicket);
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
 const deleteAnyTicket = async (req, res) => {
   try {
-    const ticket = await Ticket.findById(req.params.id);
-
-    if (!ticket) {
-      return res.status(404).json({ message: 'Ticket not found' });
-    }
-
-    await ticket.deleteOne();
+    await ticketFacade.deleteAnyTicket(req.params.id, req.user);
     res.status(200).json({ message: 'Admin deleted ticket successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    handleError(res, error);
   }
 };
 
@@ -178,10 +139,13 @@ module.exports = {
   createTicket,
   getMyTickets,
   getMyTicketById,
+  getTicketActivity,
   updateMyTicket,
+  updateMyTicketStatus,
   deleteMyTicket,
   getAllTickets,
   getAnyTicketById,
   updateAnyTicket,
+  updateAnyTicketStatus,
   deleteAnyTicket,
 };

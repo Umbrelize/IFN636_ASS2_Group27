@@ -8,23 +8,23 @@ const Profile = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    university: '',
-    address: '',
+    role: '',
   });
 
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const response = await api.get('/auth/profile');
+
         setFormData({
           name: response.data.name || '',
           email: response.data.email || '',
-          university: response.data.university || '',
-          address: response.data.address || '',
+          role: response.data.role || user?.role || 'user',
         });
       } catch (error) {
         setError(error.response?.data?.message || 'Failed to load profile');
@@ -34,7 +34,7 @@ const Profile = () => {
     };
 
     fetchProfile();
-  }, []);
+  }, [user?.role]);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -45,114 +45,105 @@ const Profile = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     setError('');
     setSuccess('');
+    setSaving(true);
 
     try {
-      const response = await api.put('/auth/profile', formData);
+      const response = await api.put('/auth/profile', {
+        name: formData.name,
+        email: formData.email,
+      });
 
       updateUser(
         {
           id: response.data.id,
           name: response.data.name,
           email: response.data.email,
-          role: user?.role || response.data.role || 'user',
-          university: response.data.university || '',
-          address: response.data.address || '',
+          role: response.data.role || user?.role || 'user',
         },
         response.data.token
       );
 
-      setSuccess('Profile updated successfully');
+      setFormData((prev) => ({
+        ...prev,
+        name: response.data.name || prev.name,
+        email: response.data.email || prev.email,
+        role: response.data.role || prev.role,
+      }));
+
+      setSuccess('Display name updated successfully.');
     } catch (error) {
       setError(error.response?.data?.message || 'Failed to update profile');
+    } finally {
+      setSaving(false);
     }
   };
 
   if (loadingProfile) {
-    return (
-      <div className="profile-page">
-        <div className="profile-card">
-          <p className="empty-text">Loading profile...</p>
-        </div>
-      </div>
-    );
+    return <div className="profile-card">Loading profile...</div>;
   }
+
+  const roleLabel = formData.role === 'admin' ? 'Admin / IT Support' : 'User';
 
   return (
     <div className="profile-page">
       <div className="profile-card">
-        <h1>Profile</h1>
-        <p>Manage your account details</p>
-
-        {error && <p className="error-text">{error}</p>}
-
-        {success && (
-          <p
-            style={{
-              margin: '0 0 16px',
-              padding: '12px 14px',
-              borderRadius: '12px',
-              background: '#edfdf3',
-              border: '1px solid #b7ebc8',
-              color: '#1f8f4d',
-              fontSize: '14px',
-              fontWeight: 600,
-            }}
-          >
-            {success}
+        <div className="profile-header">
+          <h1>Account Settings</h1>
+          <p>
+            Update your display name and review your account access information.
           </p>
-        )}
+        </div>
+
+        {error && <div className="error-text">{error}</div>}
+        {success && <div className="success-text">{success}</div>}
 
         <form onSubmit={handleSubmit} className="ticket-form">
           <div className="form-group">
-            <label>Name</label>
+            <label>Display Name</label>
             <input
-              type="text"
               name="name"
               value={formData.name}
               onChange={handleChange}
-              placeholder="Enter your name"
+              placeholder="Enter your display name"
+              required
             />
+            <small className="field-note">
+              This is the only profile detail users can update in this version.
+            </small>
           </div>
 
           <div className="form-group">
             <label>Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Enter your email"
-            />
+            <input value={formData.email} readOnly className="readonly-input" />
+            <small className="field-note">
+              Email is used for login and cannot be changed from this page.
+            </small>
           </div>
 
           <div className="form-group">
-            <label>University</label>
-            <input
-              type="text"
-              name="university"
-              value={formData.university}
-              onChange={handleChange}
-              placeholder="Enter your university"
-            />
+            <label>Role</label>
+            <input value={roleLabel} readOnly className="readonly-input" />
+            <small className="field-note">
+              Role controls system access and can only be managed by the system owner.
+            </small>
           </div>
 
-          <div className="form-group">
-            <label>Address</label>
-            <input
-              type="text"
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              placeholder="Enter your address"
-            />
-          </div>
-
-          <button type="submit" className="primary-btn">
-            Update Profile
+          <button type="submit" className="account-update-btn" disabled={saving}>
+            {saving ? 'Updating...' : 'Update Display Name'}
           </button>
         </form>
+
+        <div className="profile-security-box">
+          <h3>Password Management</h3>
+          <p>
+            Password update is not enabled in this version. A secure password-change
+            feature should require current password verification before allowing a new
+            password to be saved.
+          </p>
+        </div>
       </div>
     </div>
   );

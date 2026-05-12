@@ -11,9 +11,14 @@ import MyTickets from './pages/MyTickets';
 import Tickets from './pages/Tickets';
 import TicketDetail from './pages/TicketDetail';
 import Profile from './pages/Profile';
+import ClosedTicketHistory from './pages/ClosedTicketHistory';
+
+import ManageCategories from './pages/ManageCategories';
 
 import { useAuth } from './context/AuthContext';
 import './App.css';
+
+
 
 function App() {
   const { user, isAuthenticated } = useAuth();
@@ -25,7 +30,11 @@ function App() {
           path="/"
           element={
             isAuthenticated ? (
-              <Navigate to={user?.role === 'admin' ? '/admin' : '/dashboard'} replace />
+              user?.role === 'admin' ? (
+                <Navigate to="/admin" replace />
+              ) : (
+                <Navigate to="/dashboard" replace />
+              )
             ) : (
               <Navigate to="/login" replace />
             )
@@ -43,6 +52,17 @@ function App() {
                 <UserDashboard />
               </Layout>
             </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <Layout>
+                <AdminDashboard />
+              </Layout>
+            </AdminRoute>
           }
         />
 
@@ -69,28 +89,6 @@ function App() {
         />
 
         <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Profile />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/admin"
-          element={
-            <AdminRoute>
-              <Layout>
-                <AdminDashboard />
-              </Layout>
-            </AdminRoute>
-          }
-        />
-
-        <Route
           path="/tickets"
           element={
             <AdminRoute>
@@ -109,6 +107,40 @@ function App() {
                 <TicketDetail />
               </Layout>
             </AdminRoute>
+          }
+        />
+
+        
+        <Route
+          path="/categories"
+          element={
+            <AdminRoute>
+              <Layout>
+                <ManageCategories />
+              </Layout>
+            </AdminRoute>
+          }
+        />   
+
+        <Route
+          path="/history"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <ClosedTicketHistory />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Profile />
+              </Layout>
+            </ProtectedRoute>
           }
         />
 

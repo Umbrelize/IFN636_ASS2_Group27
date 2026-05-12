@@ -20,6 +20,7 @@ const getPriorityClass = (priority) => {
 const TicketDetail = () => {
   const { id } = useParams();
   const { user } = useAuth();
+
   const isAdmin = user?.role === 'admin';
 
   const [ticket, setTicket] = useState(null);
@@ -28,18 +29,20 @@ const TicketDetail = () => {
 
   const getImageSrc = (imagePath) => {
     if (!imagePath) return '';
-    if (imagePath.startsWith('http')) return imagePath;
+
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+
     return `${BACKEND_BASE_URL}${imagePath}`;
   };
 
   useEffect(() => {
     const fetchTicket = async () => {
       try {
-        const endpoint = isAdmin
-          ? `/tickets/admin/${id}`
-          : `/tickets/${id}`;
-
+        const endpoint = isAdmin ? `/tickets/admin/${id}` : `/tickets/${id}`;
         const response = await api.get(endpoint);
+
         setTicket(response.data);
       } catch (error) {
         setError(error.response?.data?.message || 'Failed to load ticket details');
@@ -52,47 +55,30 @@ const TicketDetail = () => {
   }, [id, isAdmin]);
 
   if (loading) {
-    return (
-      <div className="ticket-detail-page">
-        <div className="card ticket-detail-card">
-          <p className="empty-text">Loading ticket details...</p>
-        </div>
-      </div>
-    );
+    return <div className="ticket-detail-card">Loading ticket details...</div>;
   }
 
   if (error) {
-    return (
-      <div className="ticket-detail-page">
-        <div className="card ticket-detail-card">
-          <p className="error-text">{error}</p>
-        </div>
-      </div>
-    );
+    return <div className="error-text">{error}</div>;
   }
 
   if (!ticket) {
-    return (
-      <div className="ticket-detail-page">
-        <div className="card ticket-detail-card">
-          <p className="error-text">Ticket not found.</p>
-        </div>
-      </div>
-    );
+    return <div className="ticket-detail-card">Ticket not found.</div>;
   }
 
   const imageSrc = getImageSrc(ticket.image);
+  const backLink = isAdmin ? '/tickets' : '/my-tickets';
 
   return (
     <div className="ticket-detail-page">
-      <div className="card ticket-detail-card">
+      <div className="ticket-detail-card">
         <div className="ticket-detail-header">
           <div>
             <h1>{ticket.subject}</h1>
             <p>Full ticket information</p>
           </div>
 
-          <Link to={isAdmin ? '/tickets' : '/my-tickets'} className="back-link">
+          <Link className="back-link" to={backLink}>
             ← Back
           </Link>
         </div>
@@ -166,22 +152,13 @@ const TicketDetail = () => {
 
         <div className="detail-section">
           <h3>Image</h3>
+
           {ticket.image ? (
             <div className="detail-image-wrap">
-              <a
-                href={imageSrc}
-                target="_blank"
-                rel="noreferrer"
-                className="image-link"
-              >
+              <a className="image-link" href={imageSrc} target="_blank" rel="noreferrer">
                 Open image
               </a>
-
-              <img
-                src={imageSrc}
-                alt={ticket.subject}
-                className="detail-image"
-              />
+              <img className="detail-image" src={imageSrc} alt="Ticket attachment" />
             </div>
           ) : (
             <div className="detail-box">No image attached.</div>
