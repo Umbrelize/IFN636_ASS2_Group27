@@ -1,6 +1,14 @@
 import { useEffect, useState } from 'react';
 import api, { BACKEND_BASE_URL } from '../axiosConfig';
 
+const defaultCategories = [
+  { name: 'Hardware' },
+  { name: 'Software' },
+  { name: 'Network' },
+  { name: 'Account' },
+  { name: 'Other' },
+];
+
 const TicketForm = ({
   tickets = [],
   setTickets,
@@ -8,6 +16,8 @@ const TicketForm = ({
   setEditingTicket,
   isAdmin = false,
 }) => {
+  const [categories, setCategories] = useState(defaultCategories);
+
   const [formData, setFormData] = useState({
     subject: '',
     description: '',
@@ -19,8 +29,58 @@ const TicketForm = ({
 
   const [existingImage, setExistingImage] = useState('');
   const [previewUrl, setPreviewUrl] = useState('');
+  const [fileInputKey, setFileInputKey] = useState(Date.now());
+
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  const getDefaultCategory = (categoryList = categories) => {
+    const otherCategory = categoryList.find((category) => category.name === 'Other');
+    return otherCategory?.name || categoryList[0]?.name || 'Other';
+  };
+
+  const getErrorMessage = (err) => {
+    return (
+      err.response?.data?.message ||
+      err.response?.data?.error ||
+      err.message ||
+      'Failed to save ticket. Please check the ticket details and try again.'
+    );
+  };
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await api.get('/categories');
+        const activeCategories = response.data || [];
+
+        if (activeCategories.length > 0) {
+          setCategories(activeCategories);
+
+          if (!editingTicket) {
+            setFormData((prev) => {
+              const hasCurrentCategory = activeCategories.some(
+                (category) => category.name === prev.category
+              );
+
+              return {
+                ...prev,
+                category: hasCurrentCategory
+                  ? prev.category
+                  : getDefaultCategory(activeCategories),
+              };
+            });
+          }
+        }
+      } catch (error) {
+        setCategories(defaultCategories);
+      }
+    };
+
+    fetchCategories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (editingTicket) {
@@ -35,23 +95,17 @@ const TicketForm = ({
 
       setExistingImage(editingTicket.image || '');
       setPreviewUrl('');
-    } else {
-      setFormData({
-        subject: '',
-        description: '',
-        category: 'Other',
-        priority: 'Medium',
-        status: 'Open',
-        image: null,
-      });
-
-      setExistingImage('');
-      setPreviewUrl('');
+      setFileInputKey(Date.now());
+      setSuccess('');
+      setError('');
     }
   }, [editingTicket]);
 
   useEffect(() => {
-    if (!formData.image) return;
+    if (!formData.image) {
+      setPreviewUrl('');
+      return;
+    }
 
     const objectUrl = URL.createObjectURL(formData.image);
     setPreviewUrl(objectUrl);
@@ -69,7 +123,44 @@ const TicketForm = ({
   };
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0] || null;
+    const file = e.target.files?.[0] || null;
+
+    setError('');
+    setSuccess('');
+
+    if (!file) {
+      setFormData((prev) => ({
+        ...prev,
+        image: null,
+      }));
+      setPreviewUrl('');
+      return;
+    }
+
+    const isImage = file.type.startsWith('image/');
+
+    if (!isImage) {
+      setError('Please upload an image file only.');
+      setFormData((prev) => ({
+        ...prev,
+        image: null,
+      }));
+      setFileInputKey(Date.now());
+      return;
+    }
+
+    const maxSizeInMB = 5;
+    const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
+
+    if (file.size > maxSizeInBytes) {
+      setError(`Image file is too large. Please upload an image under ${maxSizeInMB}MB.`);
+      setFormData((prev) => ({
+        ...prev,
+        image: null,
+      }));
+      setFileInputKey(Date.now());
+      return;
+    }
 
     setFormData((prev) => ({
       ...prev,
@@ -81,7 +172,7 @@ const TicketForm = ({
     setFormData({
       subject: '',
       description: '',
-      category: 'Other',
+      category: getDefaultCategory(),
       priority: 'Medium',
       status: 'Open',
       image: null,
@@ -90,6 +181,7 @@ const TicketForm = ({
     setExistingImage('');
     setPreviewUrl('');
     setError('');
+    setFileInputKey(Date.now());
 
     if (setEditingTicket) {
       setEditingTicket(null);
@@ -117,32 +209,29 @@ const TicketForm = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     setError('');
+    setSuccess('');
     setSubmitting(true);
 
     try {
       const payload = buildPayload();
 
       if (!editingTicket) {
-        const response = await api.post('/tickets', payload, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
+        const response = await api.post('/tickets', payload);
 
         if (setTickets) {
           setTickets([response.data, ...tickets]);
         }
+
+        clearForm();
+        setSuccess('Ticket created successfully.');
       } else {
         const endpoint = isAdmin
           ? `/tickets/admin/${editingTicket._id}`
           : `/tickets/${editingTicket._id}`;
 
-        const response = await api.put(endpoint, payload, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
+        const response = await api.put(endpoint, payload);
 
         if (setTickets) {
           setTickets(
@@ -151,39 +240,51 @@ const TicketForm = ({
             )
           );
         }
+
+        clearForm();
+        setSuccess('Ticket updated successfully.');
       }
 
-      clearForm();
-    } catch (error) {
-      setError(error.response?.data?.message || 'Failed to save ticket');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      setError(getErrorMessage(err));
     } finally {
       setSubmitting(false);
     }
   };
 
+  const currentImageSrc = existingImage
+    ? `${BACKEND_BASE_URL}${existingImage}`
+    : '';
+
   return (
-    <div className="card form-card">
+    <div className="ticket-form-card fixed-ticket-form-card">
       <h3>{editingTicket ? 'Edit Ticket' : 'Create New Ticket'}</h3>
 
-      <p
-        style={{
-          margin: '0 0 20px',
-          fontSize: '14px',
-          color: '#8a94a6',
-        }}
-      >
+      <p>
         {editingTicket
           ? 'Update your ticket details below.'
           : 'Please provide specific details so we can assist you better.'}
       </p>
 
-      {error && <p className="error-text">{error}</p>}
+      {error && (
+        <div className="ticket-alert ticket-alert-error">
+          <strong>Action failed</strong>
+          <span>{error}</span>
+        </div>
+      )}
 
-      <form onSubmit={handleSubmit} className="ticket-form">
+      {success && (
+        <div className="ticket-alert ticket-alert-success">
+          <strong>Success</strong>
+          <span>{success}</span>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="ticket-form" encType="multipart/form-data">
         <div className="form-group">
           <label>Ticket Title</label>
           <input
-            type="text"
             name="subject"
             value={formData.subject}
             onChange={handleChange}
@@ -200,11 +301,11 @@ const TicketForm = ({
               value={formData.category}
               onChange={handleChange}
             >
-              <option value="Hardware">Hardware</option>
-              <option value="Software">Software</option>
-              <option value="Network">Network</option>
-              <option value="Account">Account</option>
-              <option value="Other">Other</option>
+              {categories.map((category) => (
+                <option key={category._id || category.name} value={category.name}>
+                  {category.name}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -220,29 +321,24 @@ const TicketForm = ({
               <option value="High">High - Urgent problem</option>
             </select>
           </div>
-
-          {isAdmin && editingTicket && (
-            <div className="form-group">
-              <label>Status</label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-              >
-                <option value="Open">Open</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Resolved">Resolved</option>
-                <option value="Closed">Closed</option>
-              </select>
-            </div>
-          )}
         </div>
+
+        {isAdmin && editingTicket && (
+          <div className="form-group">
+            <label>Status</label>
+            <select name="status" value={formData.status} onChange={handleChange}>
+              <option value="Open">Open</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Resolved">Resolved</option>
+              <option value="Closed">Closed</option>
+            </select>
+          </div>
+        )}
 
         <div className="form-group">
           <label>Description</label>
           <textarea
             name="description"
-            rows="5"
             value={formData.description}
             onChange={handleChange}
             placeholder="Provide detailed steps to reproduce or details about your request..."
@@ -253,54 +349,43 @@ const TicketForm = ({
         <div className="form-group">
           <label>Upload Image (Optional)</label>
           <input
+            key={fileInputKey}
             type="file"
             accept="image/*"
             onChange={handleFileChange}
           />
 
           {previewUrl && (
-            <div style={{ marginTop: '12px' }}>
+            <div className="ticket-image-preview-wrap">
+              <span>New image preview</span>
               <img
                 src={previewUrl}
                 alt="Preview"
-                style={{
-                  width: '140px',
-                  height: 'auto',
-                  borderRadius: '10px',
-                  border: '1px solid #e5e7eb',
-                }}
+                className="ticket-image-preview"
               />
             </div>
           )}
 
-          {!previewUrl && existingImage && (
-            <div style={{ marginTop: '12px' }}>
+          {!previewUrl && currentImageSrc && (
+            <div className="ticket-image-preview-wrap">
+              <span>Current image</span>
               <img
-                src={`${BACKEND_BASE_URL}${existingImage}`}
+                src={currentImageSrc}
                 alt="Current ticket"
-                style={{
-                  width: '140px',
-                  height: 'auto',
-                  borderRadius: '10px',
-                  border: '1px solid #e5e7eb',
-                }}
+                className="ticket-image-preview"
               />
             </div>
           )}
         </div>
 
-        <div className="form-actions">
+        <div className="ticket-form-actions-fixed">
           {editingTicket && (
-            <button
-              type="button"
-              className="secondary-btn"
-              onClick={clearForm}
-            >
+            <button type="button" className="ticket-cancel-btn" onClick={clearForm}>
               Cancel
             </button>
           )}
 
-          <button type="submit" className="primary-btn" disabled={submitting}>
+          <button type="submit" className="ticket-submit-btn" disabled={submitting}>
             {submitting
               ? 'Saving...'
               : editingTicket
