@@ -59,7 +59,7 @@ const Register = () => {
             <BrandLogo />
             <div>
               <h1>Create account</h1>
-              <p>Register for the IT Support Ticket System</p>
+              <p>Register for TechBuddy</p>
             </div>
           </div>
 

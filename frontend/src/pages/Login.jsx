@@ -51,7 +51,7 @@ const Login = () => {
       <header className="auth-topbar">
         <div className="auth-topbar-brand">
           <BrandLogo />
-          <div className="auth-topbar-text">IT Support Portal</div>
+          <div className="auth-topbar-text">Login to TechBuddy</div>
         </div>
       </header>
 
@@ -60,7 +60,7 @@ const Login = () => {
           <div className="auth-brand auth-brand-compact">
             <BrandLogo />
             <div>
-              <h1>IT Support Ticket System</h1>
+              <h1>TechBuddy</h1>
               <p>Enter your credentials to manage support tickets</p>
             </div>
           </div>
