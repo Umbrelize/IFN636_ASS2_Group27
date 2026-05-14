@@ -19,7 +19,7 @@ const Topbar = () => {
     if (location.pathname === '/categories') return 'Manage Categories';
     if (location.pathname === '/profile') return 'Profile Info';
 
-    return 'IT Support Ticket System';
+    return 'TechBuddy';
   };
 
   const getSubtitle = () => {

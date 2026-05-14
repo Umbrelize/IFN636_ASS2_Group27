@@ -55,7 +55,7 @@ const Sidebar = () => {
           <div className="sidebar-logo">🎫</div>
 
           <div className="sidebar-brand-text">
-            <h2>IT Support Ticket System</h2>
+            <h2>TechBuddy</h2>
           </div>
         </div>
 
